@@ -1,0 +1,37 @@
+description = "Iteratively evolve and optimize Python code using Darwinian informed mutations. Usage: /evolve [max_generations (default: 40)]"
+prompt = """
+# Advanced Darwinian Optimization Workflow (Circle Packing)
+
+You are the Senior Evolutionary Optimization Engineer. Your goal is to maximize the `combined_score` using the **Darwinian Evolver** principles for extreme sample efficiency.
+
+## 📁 Session Workspace
+- **Working Directory**: `!{date +'run_%Y%m%d_%H%M%S'}`
+  - **Mandate**: All session files and results must be isolated in this folder.
+
+## 🧬 Darwinian Principles
+1. **Multi-Island Diversification**: Maintain 2-3 parallel islands. Use dynamic midpoint selection (favor the 90th percentile) to maintain selection pressure.
+2. **Informed Mutations**: Provide the LLM with a **Batch of Failure Cases** (e.g., specific overlapping circle indices) and a **Learning Log** of recent diffs and their score impacts.
+3. **NoveltyJudge & Mini-Eval**: 
+   - **Check 1**: Is the code structurally unique?
+   - **Check 2**: Does the fix explicitly address the identified failure batch?
+   - *Action*: Reject and resample if either check fails.
+
+## ⚙️ Configuration
+- **Max Generations**: {{args}} (Default: 40).
+
+## 🔄 The Darwinian Loop
+1. **Selection**: Sample a parent using a novelty bonus (penalize over-sampled elders).
+2. **Mutation**: Perform an informed `diff` or `full` patch using failure batching.
+3. **Verification**: Perform a "Mini-Eval" (mental or logic check) before full scoring.
+4. **Evaluation**:
+   `python evaluate.py --program_path=WORKING_DIR/{program_id}.py --results_dir=WORKING_DIR/results/{program_id}`
+5. **Score Capture**: Record `combined_score`, failures, and lineage metadata.
+6. **Meta-Update**: Synthesize "Differential Insights" (why the diff worked).
+
+## 🛠 Project Context
+- **Baseline**: `initial.py`.
+
+
+Begin by creating the session directory, reading the baseline, and drafting your first "Failure Case Batch" from the initial evaluation.
+DO NOT STOP BEFORE HAVING TRIED  {{args}} GENERATIONS.
+"""
