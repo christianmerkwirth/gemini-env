@@ -233,13 +233,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--program_path",
         type=str,
-        default="initial.py",
+        default="circle_packing/initial.py",
         help="Path to program to evaluate (must contain 'run_packing')",
     )
     parser.add_argument(
         "--results_dir",
         type=str,
-        default="results",
+        default="circle_packing/results",
         help="Dir to save results (metrics.json, correct.json, extra.npz)",
     )
     parser.add_argument(

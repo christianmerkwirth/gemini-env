@@ -7,7 +7,50 @@ import argparse
 import numpy as np
 from typing import Tuple, Optional, List, Dict, Any
 
-from shinka.core import run_shinka_eval
+import importlib.util
+import sys
+import json
+
+def run_shinka_eval(
+    program_path: str,
+    results_dir: str,
+    experiment_fn_name: str,
+    num_runs: int,
+    validate_fn: Any,
+    aggregate_metrics_fn: Any,
+    timeout: int = 60,
+    get_experiment_kwargs: Any = None,
+) -> Tuple[Dict[str, Any], bool, str]:
+    """Stub implementation of run_shinka_eval."""
+    try:
+        spec = importlib.util.spec_from_file_location("module.name", program_path)
+        if spec is None or spec.loader is None:
+            return {}, False, f"Could not load module from {program_path}"
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["module.name"] = module
+        spec.loader.exec_module(module)
+        
+        experiment_fn = getattr(module, experiment_fn_name)
+        
+        results = []
+        for i in range(num_runs):
+            if get_experiment_kwargs:
+                kwargs = get_experiment_kwargs(i)
+            else:
+                kwargs = {}
+            # Note: timeout is not implemented in this simple stub
+            res = experiment_fn(**kwargs)
+            results.append(res)
+            
+            is_valid, msg = validate_fn(res)
+            if not is_valid:
+                return {}, False, f"Validation failed: {msg}"
+        
+        metrics = aggregate_metrics_fn(results)
+        return metrics, True, ""
+    except Exception as e:
+        import traceback
+        return {}, False, f"Error during evaluation: {e}\n{traceback.format_exc()}"
 
 from env import render_str, Action
 
@@ -145,6 +188,22 @@ def main(program_path: str, results_dir: str):
     else:
         print(f"Evaluation or Validation failed: {error_msg}")
 
+    metrics_file = os.path.join(results_dir, "metrics.json")
+    try:
+        with open(metrics_file, "w") as f:
+            json.dump(metrics, f, indent=4)
+        print(f"Metrics saved to {metrics_file}")
+    except Exception as e:
+        print(f"Error saving metrics.json: {e}")
+
+    correct_file = os.path.join(results_dir, "correct.json")
+    try:
+        with open(correct_file, "w") as f:
+            json.dump(correct, f)
+        print(f"Correctness status saved to {correct_file}")
+    except Exception as e:
+        print(f"Error saving correct.json: {e}")
+
     print("Metrics:")
     for key, value in metrics.items():
         if isinstance(value, str) and len(value) > 100:
@@ -158,13 +217,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--program_path",
         type=str,
-        default="initial.py",
+        default="games_2048/initial.py",
         help="Path to program to evaluate (must contain 'run_2048')",
     )
     parser.add_argument(
         "--results_dir",
         type=str,
-        default="results",
+        default="games_2048/results",
         help="Dir to save results (metrics.json, correct.json, extra.npz)",
     )
     parsed_args = parser.parse_args()

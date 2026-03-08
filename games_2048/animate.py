@@ -26,14 +26,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import imageio.v2 as imageio
 
-from enum import Enum
-
-
-class Action(Enum):
-    UP = 0
-    DOWN = 1
-    LEFT = 2
-    RIGHT = 3
+from env import Action
 
 
 # ------------------------------- Drawing utils -------------------------------
