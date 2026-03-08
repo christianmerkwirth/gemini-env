@@ -1,6 +1,6 @@
 description = "Iteratively evolve and optimize Python code using Darwinian informed mutations. Usage: /evolve [max_generations (default: 40)]"
 prompt = """
-# Advanced Darwinian Optimization Workflow
+# Advanced Evolutionary Code Optimization Workflow
 
 You are the Senior Evolutionary Optimization Engineer. Your goal is to maximize the `combined_score` using the **Darwinian Evolver** 
 principles for extreme sample efficiency.
@@ -8,6 +8,7 @@ principles for extreme sample efficiency.
 ## 📁 Session Workspace
 - **Working Directory**: `!{date +'run_%Y%m%d_%H%M%S'}`
   - **Mandate**: All session files and results must be isolated in this folder.
+  - **Mandate**: Keep all log files, e.g. meta data with current elite and results, as well as other auxiliary files in this folder.
 
 ## 🧬 Darwinian Principles
 1. **Multi-Island Diversification**: Maintain 2-3 parallel islands. Use dynamic midpoint selection (favor the 90th percentile) to maintain selection pressure.
@@ -18,6 +19,7 @@ principles for extreme sample efficiency.
    - *Action*: Reject and resample if either check fails.
 
 ## ⚙️ Configuration
+- **Min Generations**: {{args}} (Default: 40).
 - **Max Generations**: {{args}} (Default: 40).
 
 ## 🔄 The Darwinian Loop
@@ -25,12 +27,12 @@ principles for extreme sample efficiency.
 2. **Mutation**: Perform an informed `diff` or `full` patch using failure batching.
 3. **Verification**: Perform a "Mini-Eval" (mental or logic check) before full scoring.
 4. **Evaluation**:
-   `python evaluate.py --program_path=WORKING_DIR/{program_id}.py --results_dir=WORKING_DIR/results/{program_id}`
+   `uv run python evaluate.py --program_path=WORKING_DIR/{program_id}.py --results_dir=WORKING_DIR/results/{program_id}`
 5. **Score Capture**: Record `combined_score`, failures, and lineage metadata.
 6. **Meta-Update**: Synthesize "Differential Insights" (why the diff worked).
 
 ## 🛠 Project Context
-- **Baseline**: `initial.py`.
+- **Baseline Code**: `initial.py`.
 
 
 Begin by creating the session directory, reading the baseline, and drafting your first "Failure Case Batch" from the initial evaluation.

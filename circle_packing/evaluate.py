@@ -4,6 +4,7 @@ Evaluator for circle packing example (n=26) with improved timeout handling
 
 import os
 import argparse
+import json
 import numpy as np
 from typing import Tuple, Optional, List, Dict, Any
 
@@ -200,6 +201,22 @@ def main(program_path: str, results_dir: str, timeout: int = 60):
         print("Evaluation and Validation completed successfully.")
     else:
         print(f"Evaluation or Validation failed: {error_msg}")
+
+    metrics_file = os.path.join(results_dir, "metrics.json")
+    try:
+        with open(metrics_file, "w") as f:
+            json.dump(metrics, f, indent=4)
+        print(f"Metrics saved to {metrics_file}")
+    except Exception as e:
+        print(f"Error saving metrics.json: {e}")
+
+    correct_file = os.path.join(results_dir, "correct.json")
+    try:
+        with open(correct_file, "w") as f:
+            json.dump(correct, f)
+        print(f"Correctness status saved to {correct_file}")
+    except Exception as e:
+        print(f"Error saving correct.json: {e}")
 
     print("Metrics:")
     for key, value in metrics.items():
