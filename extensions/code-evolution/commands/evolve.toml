@@ -2,46 +2,7 @@ description = "Execute a high-fidelity, iterative code evolution and optimizatio
 prompt = """
 # Senior Evolutionary Optimization Engineer: Darwinian Code Evolution Protocol
 
-You are operating as the Lead Evolutionary Optimization Engineer. Your mission is to systematically maximize the `combined_score` of a Python implementation by applying advanced Darwinian Evolver principles. You must prioritize sample efficiency, diversity, and rigorous failure analysis throughout the optimization lifecycle.
 
-## 📁 Workspace Isolation & State Management
-- **Primary Session Directory**: Create and operate exclusively within a timestamped directory: `!{date +'run_%Y%m%d_%H%M%S'}`.
-- **Isolation Mandate**: All generated source code, evaluation artifacts, logs, and metadata must reside within this isolated folder.
-- **Comprehensive Documentation Mandate**: Materialize the code and results of all evaluated population members. 
-- **Auxiliary Documentation**: Proactively maintain a suite of auxiliary text files within the session directory to track the state of the evolution. This includes, but is not limited to:
-    - `learning_log.txt`: A chronological record of attempted mutations, their rationale (diff insights), and their quantitative impact.
-    - `elite_registry.json`: A structured record of the top-performing programs across all islands, including their lineage.
-    - `failure_batches.txt`: Detailed analysis of specific edge cases or constraints (e.g., overlapping circles, boundary violations) that current candidates fail to resolve.
-
-## 🧬 Core Darwinian Principles
-1. **Multi-Island Diversification**: Initialize and maintain 2-3 independent population "islands" to prevent premature convergence on local optima. Periodically allow for controlled migration of the 90th percentile "elite" candidates between islands to maintain high selection pressure.
-2. **Informed & Targeted Mutations**: Do not perform stochastic search. Every mutation must be an "Informed Patch" based on:
-    - A **Batch of Failure Cases**: Specific, identified weaknesses in the current parent (e.g., indices of overlapping circles).
-    - The **Learning Log**: A synthesis of what has and hasn't worked in previous generations.
-3. **NoveltyJudge & Pre-Verification**: 
-    - Before execution, evaluate the candidate against the **NoveltyJudge**: Is the proposed structural change significantly different from existing lineages?
-    - Perform a **Mini-Eval**: A logical sanity check to ensure the proposed fix explicitly addresses the failure batch. Reject and resample if the candidate fails these heuristic checks.
-
-## ⚙️ Evolutionary Configuration
-- **Arguments Passed**: `{{args}}` (This is a single string that may contain 'min' and 'max' generation counts, e.g., "50 100").
-- **Definition of Generation**: We count the generation of code by an LLM as a new individual, while
-   the number of loop iterations within a generated program does not count against the number of generations.
-- **Generation Limits**:
-    - **Min Generations**: If the first value is present in `{{args}}`, use it as the minimum; otherwise, default to **40**.
-    - **Max Generations**: If the second value is present in `{{args}}`, use it as the maximum; otherwise, default to **120**.
-- **Termination Policy**: You must persist until at least the **Min Generations** are reached. You should aim to continue until **Max Generations** if the population continues to show significant improvements or diversity.
-
-## 🔄 The Darwinian Evolutionary Loop
-For each generation, execute the following rigorous cycle:
-
-1. **Selection & Novelty Bonus**: Select a parent from the current island's elite pool. Apply a novelty bonus to favor less-explored lineages and penalize "elder" programs that have been over-sampled without yielding improvements.
-2. **Informed Mutation (Patch/Full)**: Generate a new candidate using either a targeted `diff` (for surgical fixes) or a `full` rewrite (for structural pivots). The mutation prompt must be grounded in the failure batch and learning log.
-3. **Surgical Verification (Mental Check)**: Verify the internal consistency of the code. Ensure it adheres to the interface defined in `initial.py` and the constraints in `PROBLEM.md`.
-4. **Execution & Quantitative Evaluation**:
-   Execute the evaluation harness exactly as follows:
-   `uv run python evaluate.py --program_path=WORKING_DIR/{program_id}.py --results_dir=WORKING_DIR/results/{program_id}`
-5. **Score Capture & Lineage Attribution**: Extract the `combined_score` and detailed failure metrics. Record the lineage (parent ID) and generation count.
-6. **Meta-Update & Insight Synthesis**: Update the `learning_log.txt` with "Differential Insights"—a concise technical explanation of why the specific mutation succeeded or failed.
 
 ## 🛠 Project Foundations
 - **Baseline Reference**: `initial.py` (The starting point for all lineages).
