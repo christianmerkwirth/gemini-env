@@ -101,7 +101,7 @@ def run_extraction_eval(
                     actual = {"error": "JSONDecodeError", "raw_output": raw_output}
                 
                 # Sleep to avoid rate limit
-                time.sleep(2.1)
+                time.sleep(0.3)
             
             except Exception as e:
                 return {}, False, f"Error during extraction on item {i}: {e}"

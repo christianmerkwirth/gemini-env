@@ -33,7 +33,7 @@ def extract_data(text: str) -> str:
         contents=prompt,
         config=GenerateContentConfig(
             temperature=0.0,
-            max_output_tokens=256,
+            max_output_tokens=400,
         )
     )
     
