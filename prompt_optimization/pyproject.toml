@@ -1,0 +1,12 @@
+[project]
+name = "prompt-optimization"
+version = "0.1.0"
+description = "Challenge to optimize prompts for strict JSON extraction"
+dependencies = [
+    "google-genai",
+    "python-dotenv",
+    "numpy",
+]
+
+[tool.uv]
+managed = true
