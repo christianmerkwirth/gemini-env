@@ -33,18 +33,25 @@ def run_shinka_eval(
         experiment_fn = getattr(module, experiment_fn_name)
         
         results = []
+        all_errors = []
+        all_valid = True
+        
         for i in range(num_runs):
             kwargs = get_experiment_kwargs(i)
             # Note: timeout is not implemented in this simple stub
             res = experiment_fn(**kwargs)
             results.append(res)
             
+            # Extract n from kwargs to pass to validate_fn if needed, 
+            # though adapted_validate_packing will infer it from the result shape.
             is_valid, msg = validate_fn(res)
             if not is_valid:
-                return {}, False, f"Validation failed: {msg}"
+                all_valid = False
+                all_errors.append(f"Run {i} (n={kwargs.get('n')}): {msg}")
         
         metrics = aggregate_metrics_fn(results)
-        return metrics, True, ""
+        error_summary = "\n".join(all_errors) if all_errors else ""
+        return metrics, all_valid, error_summary
     except Exception as e:
         import traceback
         return {}, False, f"Error during evaluation: {e}\n{traceback.format_exc()}"
@@ -80,14 +87,9 @@ def adapted_validate_packing(
     if not isinstance(radii, np.ndarray):
         radii = np.array(radii)
 
-    n_expected = 26
-    if centers.shape != (n_expected, 2):
-        msg = (
-            f"Centers shape incorrect. Expected ({n_expected}, 2), got {centers.shape}"
-        )
-        return False, msg
-    if radii.shape != (n_expected,):
-        msg = f"Radii shape incorrect. Expected ({n_expected},), got {radii.shape}"
+    n_circles = centers.shape[0]
+    if radii.shape != (n_circles,):
+        msg = f"Radii shape incorrect. Expected ({n_circles},), got {radii.shape}"
         return False, msg
 
     if np.any(radii < 0):
@@ -102,7 +104,7 @@ def adapted_validate_packing(
         )
         return False, msg
 
-    for i in range(n_expected):
+    for i in range(n_circles):
         x, y = centers[i]
         r = radii[i]
         is_outside = (
@@ -114,8 +116,8 @@ def adapted_validate_packing(
             )
             return False, msg
 
-    for i in range(n_expected):
-        for j in range(i + 1, n_expected):
+    for i in range(n_circles):
+        for j in range(i + 1, n_circles):
             dist = np.sqrt(np.sum((centers[i] - centers[j]) ** 2))
             if dist < radii[i] + radii[j] - atol:
                 msg = (
@@ -127,44 +129,57 @@ def adapted_validate_packing(
 
 
 def get_circle_packing_kwargs(run_index: int) -> Dict[str, Any]:
-    """Provides keyword arguments for circle packing runs (none needed)."""
-    return {}
+    """Provides keyword arguments for circle packing runs (n from 10 to 30)."""
+    return {"n": 10 + run_index}
 
 
 def aggregate_circle_packing_metrics(
     results: List[Tuple[np.ndarray, np.ndarray, float]], results_dir: str
 ) -> Dict[str, Any]:
     """
-    Aggregates metrics for circle packing. Assumes num_runs=1.
-    Saves extra.npz with detailed packing information.
+    Aggregates metrics for circle packing for multiple runs (n from 10 to 30).
+    Saves results for each run in extra.npz.
     """
     if not results:
         return {"combined_score": 0.0, "error": "No results to aggregate"}
 
-    centers, radii, reported_sum = results[0]
+    total_sum_of_radii = 0.0
+    all_public_metrics = {}
+    all_private_metrics = {}
 
-    public_metrics = {
-        "centers_str": format_centers_string(centers),
-        "num_circles": centers.shape[0],
-    }
-    private_metrics = {
-        "reported_sum_of_radii": float(reported_sum),
-    }
+    for i, res in enumerate(results):
+        centers, radii, reported_sum = res
+        n = centers.shape[0]
+        total_sum_of_radii += float(reported_sum)
+        
+        all_public_metrics[f"n_{n}"] = {
+            "num_circles": n,
+            "reported_sum": float(reported_sum)
+        }
+        all_private_metrics[f"n_{n}"] = {
+            "centers": centers.tolist(),
+            "radii": radii.tolist()
+        }
+
     metrics = {
-        "combined_score": float(reported_sum),
-        "public": public_metrics,
-        "private": private_metrics,
+        "combined_score": total_sum_of_radii,
+        "public": all_public_metrics,
+        "private": all_private_metrics,
     }
 
+    # Save detailed data for all runs
     extra_file = os.path.join(results_dir, "extra.npz")
     try:
-        np.savez(
-            extra_file,
-            centers=centers,
-            radii=radii,
-            reported_sum=reported_sum,
-        )
-        print(f"Detailed packing data saved to {extra_file}")
+        save_kwargs = {}
+        for i, res in enumerate(results):
+            centers, radii, reported_sum = res
+            n = centers.shape[0]
+            save_kwargs[f"centers_{n}"] = centers
+            save_kwargs[f"radii_{n}"] = radii
+            save_kwargs[f"reported_sum_{n}"] = reported_sum
+            
+        np.savez(extra_file, **save_kwargs)
+        print(f"Detailed packing data for all runs saved to {extra_file}")
     except Exception as e:
         print(f"Error saving extra.npz: {e}")
         metrics["extra_npz_save_error"] = str(e)
@@ -178,7 +193,7 @@ def main(program_path: str, results_dir: str, timeout: int = 60):
     print(f"Saving results to: {results_dir}")
     os.makedirs(results_dir, exist_ok=True)
 
-    num_experiment_runs = 1
+    num_experiment_runs = 21
 
     # Define a nested function to pass results_dir to the aggregator
     def _aggregator_with_context(

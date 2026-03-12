@@ -4,36 +4,43 @@
 import numpy as np
 
 
-def construct_packing():
+def construct_packing(n=26):
     """
-    Construct a specific arrangement of 26 circles in a unit square
+    Construct a specific arrangement of n circles in a unit square
     that attempts to maximize the sum of their radii.
 
+    Args:
+        n: Number of circles to place
+
     Returns:
-        Tuple of (centers, radii, sum_of_radii)
-        centers: np.array of shape (26, 2) with (x, y) coordinates
-        radii: np.array of shape (26) with radius of each circle
-        sum_of_radii: Sum of all radii
+        Tuple of (centers, radii)
+        centers: np.array of shape (n, 2) with (x, y) coordinates
+        radii: np.array of shape (n) with radius of each circle
     """
-    # Initialize arrays for 26 circles
-    n = 26
+    # Initialize arrays for n circles
     centers = np.zeros((n, 2))
 
     # Place circles in a structured pattern
     # This is a simple pattern - evolution will improve this
 
     # First, place a large circle in the center
-    centers[0] = [0.5, 0.5]
+    if n > 0:
+        centers[0] = [0.5, 0.5]
 
-    # Place 8 circles around it in a ring
-    for i in range(8):
-        angle = 2 * np.pi * i / 8
-        centers[i + 1] = [0.5 + 0.3 * np.cos(angle), 0.5 + 0.3 * np.sin(angle)]
+    if n > 1:
+        # Divide remaining circles into two rings if possible
+        n_inner = min(8, n - 1)
+        n_outer = n - 1 - n_inner
 
-    # Place 16 more circles in an outer ring
-    for i in range(16):
-        angle = 2 * np.pi * i / 16
-        centers[i + 9] = [0.5 + 0.7 * np.cos(angle), 0.5 + 0.7 * np.sin(angle)]
+        # Place circles in an inner ring
+        for i in range(n_inner):
+            angle = 2 * np.pi * i / n_inner
+            centers[i + 1] = [0.5 + 0.25 * np.cos(angle), 0.5 + 0.25 * np.sin(angle)]
+
+        # Place remaining circles in an outer ring
+        for i in range(n_outer):
+            angle = 2 * np.pi * i / n_outer if n_outer > 0 else 0
+            centers[i + 1 + n_inner] = [0.5 + 0.45 * np.cos(angle), 0.5 + 0.45 * np.sin(angle)]
 
     # Additional positioning adjustment to make sure all circles
     # are inside the square and don't overlap
@@ -86,9 +93,9 @@ def compute_max_radii(centers):
 
 
 # This part remains fixed (not evolved)
-def run_packing():
-    """Run the circle packing constructor for n=26"""
-    centers, radii = construct_packing()
+def run_packing(n=26):
+    """Run the circle packing constructor for n circles"""
+    centers, radii = construct_packing(n)
     # Calculate the sum of radii
     sum_radii = np.sum(radii)
     return centers, radii, sum_radii
