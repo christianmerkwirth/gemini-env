@@ -7,9 +7,29 @@ import argparse
 import json
 import numpy as np
 from typing import Tuple, Optional, List, Dict, Any
+import multiprocessing
 
 import importlib.util
 import sys
+
+def worker(program_path: str, experiment_fn_name: str, kwargs: Dict[str, Any]) -> Tuple[Any, Optional[str]]:
+    """Worker function for parallel execution."""
+    try:
+        # Load module inside the worker to avoid pickling issues
+        module_name = f"module_{os.getpid()}"
+        spec = importlib.util.spec_from_file_location(module_name, program_path)
+        if spec is None or spec.loader is None:
+            return None, f"Could not load module from {program_path}"
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        
+        experiment_fn = getattr(module, experiment_fn_name)
+        res = experiment_fn(**kwargs)
+        return res, None
+    except Exception as e:
+        import traceback
+        return None, f"Error in worker: {e}\n{traceback.format_exc()}"
 
 def run_shinka_eval(
     program_path: str,
@@ -20,36 +40,53 @@ def run_shinka_eval(
     get_experiment_kwargs: Any,
     validate_fn: Any,
     aggregate_metrics_fn: Any,
+    num_processes: int = 8,
 ) -> Tuple[Dict[str, Any], bool, str]:
-    """Stub implementation of run_shinka_eval."""
+    """Implementation of run_shinka_eval with parallel execution."""
     try:
-        spec = importlib.util.spec_from_file_location("module.name", program_path)
-        if spec is None or spec.loader is None:
-            return {}, False, f"Could not load module from {program_path}"
-        module = importlib.util.module_from_spec(spec)
-        sys.modules["module.name"] = module
-        spec.loader.exec_module(module)
+        # Prepare arguments for each run
+        all_kwargs = [get_experiment_kwargs(i) for i in range(num_runs)]
         
-        experiment_fn = getattr(module, experiment_fn_name)
-        
+        # Parallel execution
+        with multiprocessing.Pool(processes=num_processes) as pool:
+            # Note: timeout is not implemented per-call in this pool usage
+            async_results = [
+                pool.apply_async(worker, (program_path, experiment_fn_name, kwargs))
+                for kwargs in all_kwargs
+            ]
+            
+            raw_results = []
+            for res in async_results:
+                raw_results.append(res.get()) # could add timeout=timeout here
+
         results = []
         all_errors = []
         all_valid = True
         
-        for i in range(num_runs):
-            kwargs = get_experiment_kwargs(i)
-            # Note: timeout is not implemented in this simple stub
-            res = experiment_fn(**kwargs)
+        for i, (res, err) in enumerate(raw_results):
+            kwargs = all_kwargs[i]
+            if err:
+                all_valid = False
+                all_errors.append(f"Run {i} (n={kwargs.get('n')}): {err}")
+                results.append(None) # Placeholder
+                continue
+                
             results.append(res)
             
-            # Extract n from kwargs to pass to validate_fn if needed, 
-            # though adapted_validate_packing will infer it from the result shape.
             is_valid, msg = validate_fn(res)
             if not is_valid:
                 all_valid = False
                 all_errors.append(f"Run {i} (n={kwargs.get('n')}): {msg}")
         
-        metrics = aggregate_metrics_fn(results)
+        if all_valid:
+            metrics = aggregate_metrics_fn(results)
+        else:
+            # Still try to aggregate what we have if some failed? 
+            # For now, just return empty metrics or partial if possible.
+            # Filtering out None results for aggregation
+            valid_results = [r for r in results if r is not None]
+            metrics = aggregate_metrics_fn(valid_results)
+            
         error_summary = "\n".join(all_errors) if all_errors else ""
         return metrics, all_valid, error_summary
     except Exception as e:
@@ -80,6 +117,9 @@ def adapted_validate_packing(
     Returns:
         (is_valid: bool, error_message: Optional[str])
     """
+    if run_output is None:
+        return False, "No output produced"
+        
     centers, radii, reported_sum = run_output
     msg = "The circles are placed correctly. There are no overlaps or any circles outside the unit square."
     if not isinstance(centers, np.ndarray):
@@ -148,6 +188,8 @@ def aggregate_circle_packing_metrics(
     all_private_metrics = {}
 
     for i, res in enumerate(results):
+        if res is None:
+            continue
         centers, radii, reported_sum = res
         n = centers.shape[0]
         total_sum_of_radii += float(reported_sum)
@@ -172,6 +214,8 @@ def aggregate_circle_packing_metrics(
     try:
         save_kwargs = {}
         for i, res in enumerate(results):
+            if res is None:
+                continue
             centers, radii, reported_sum = res
             n = centers.shape[0]
             save_kwargs[f"centers_{n}"] = centers
@@ -187,10 +231,11 @@ def aggregate_circle_packing_metrics(
     return metrics
 
 
-def main(program_path: str, results_dir: str, timeout: int = 60):
+def main(program_path: str, results_dir: str, timeout: int = 60, num_processes: int = 8):
     """Runs the circle packing evaluation using shinka.eval."""
     print(f"Evaluating program: {program_path}")
     print(f"Saving results to: {results_dir}")
+    print(f"Using {num_processes} parallel processes")
     os.makedirs(results_dir, exist_ok=True)
 
     num_experiment_runs = 21
@@ -210,6 +255,7 @@ def main(program_path: str, results_dir: str, timeout: int = 60):
         get_experiment_kwargs=get_circle_packing_kwargs,
         validate_fn=adapted_validate_packing,
         aggregate_metrics_fn=_aggregator_with_context,
+        num_processes=num_processes,
     )
 
     if correct:
@@ -237,6 +283,8 @@ def main(program_path: str, results_dir: str, timeout: int = 60):
     for key, value in metrics.items():
         if isinstance(value, str) and len(value) > 100:
             print(f"  {key}: <string_too_long_to_display>")
+        elif key in ["public", "private"]:
+             print(f"  {key}: <nested_dict_not_displayed>")
         else:
             print(f"  {key}: {value}")
 
@@ -263,5 +311,11 @@ if __name__ == "__main__":
         default=60,
         help="Timeout for each evaluation run in seconds",
     )
+    parser.add_argument(
+        "--num_processes",
+        type=int,
+        default=8,
+        help="Number of parallel processes to use",
+    )
     parsed_args = parser.parse_args()
-    main(parsed_args.program_path, parsed_args.results_dir, parsed_args.timeout)
+    main(parsed_args.program_path, parsed_args.results_dir, parsed_args.timeout, parsed_args.num_processes)
