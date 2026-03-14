@@ -1,0 +1,90 @@
+{
+    "combined_score": -331.06714039256053,
+    "all_valid": true,
+    "results": {
+        "n_20": {
+            "status": "success",
+            "distance": 12.824880587793574
+        },
+        "n_21": {
+            "status": "success",
+            "distance": 8.263702705354316
+        },
+        "n_22": {
+            "status": "success",
+            "distance": 8.570020445632196
+        },
+        "n_23": {
+            "status": "success",
+            "distance": 10.383132718997098
+        },
+        "n_24": {
+            "status": "success",
+            "distance": 12.178945370995724
+        },
+        "n_25": {
+            "status": "success",
+            "distance": 12.765588603982396
+        },
+        "n_26": {
+            "status": "success",
+            "distance": 13.481739417887507
+        },
+        "n_27": {
+            "status": "success",
+            "distance": 11.669541446205766
+        },
+        "n_28": {
+            "status": "success",
+            "distance": 16.45775315756726
+        },
+        "n_29": {
+            "status": "success",
+            "distance": 15.463809769242415
+        },
+        "n_30": {
+            "status": "success",
+            "distance": 16.74008471674365
+        },
+        "n_31": {
+            "status": "success",
+            "distance": 16.75554378917248
+        },
+        "n_32": {
+            "status": "success",
+            "distance": 17.87468356582754
+        },
+        "n_33": {
+            "status": "success",
+            "distance": 20.63841444937354
+        },
+        "n_34": {
+            "status": "success",
+            "distance": 18.300407908451707
+        },
+        "n_35": {
+            "status": "success",
+            "distance": 18.793260771371774
+        },
+        "n_36": {
+            "status": "success",
+            "distance": 20.394902558751543
+        },
+        "n_37": {
+            "status": "success",
+            "distance": 18.09747141686569
+        },
+        "n_38": {
+            "status": "success",
+            "distance": 18.082192814169286
+        },
+        "n_39": {
+            "status": "success",
+            "distance": 19.755166510884923
+        },
+        "n_40": {
+            "status": "success",
+            "distance": 23.575897667290178
+        }
+    }
+}
