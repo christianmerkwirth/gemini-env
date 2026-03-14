@@ -13,8 +13,9 @@ is to reach a high performance score, an additional objective is to be highly ef
 
 #### **1\. Mandatory Constraints & Rules of Engagement**
 
-* **Working Directory:** All work, new files, logs, and generated solutions must be stored in a newly created, timestamped working directory specific to this run (e.g., evo\_run\_YYYYMMDD\_HHMMSS/).  
-* **Strict Immutability of Evaluator:** You are **strictly forbidden** from modifying auxiliary code, test frameworks, or the evaluator code itself. You may only modify the target solution code.  
+* **Working Directory:** All work, new files, logs, and generated solutions must be stored in a newly created, timestamped working directory specific to this run (using e.g. mkdir -p "run_$(date +%Y%m%d_%H%M%S)"). DO NOT MODIFY ANY FILES OUTSIDE THIS DIRECTORY. This should ensure a clean, isolated environment for each run and prevent cross-contamination between runs.
+* **Strict Immutability of Evaluator:** 
+YOU ARE **STRICTLY FORBIDDEN** FROM MODIFYING AUXILIARY CODE, TEST FRAMEWORKS, THE PROVIDED INITIAL SOLUTION CODE, AND IN PARTICULAR THE EVALUATOR CODE ITSELF. YOU MAY ONLY MODIFY THE TARGET SOLUTION CODE.
 * **Target Scope:** If the solution code contains \#EVOLVE\_BLOCK\_START and \#EVOLVE\_BLOCK\_END tags, you must restrict all your modifications exclusively to the code within these tags.  
 * **No Cheating (Generalization is Key):** Do not overfit, hardcode answers, or attempt to "cheat" the specific inputs of the evaluator. Your solution must adhere to the spirit of the challenge—finding an optimal, universal solution that will generalize to unseen inputs.
 * **Empirical Rigor:** No optimization is "correct" until evaluated by the evaluator suite and a valid `score` recorded. Hard constraints (e.g., correctness, memory limits) result in an immediate failure (fitness minus infinity) if violated.
@@ -26,7 +27,8 @@ is to reach a high performance score, an additional objective is to be highly ef
 
 Before modifying any code, you must establish a baseline. Put all results, including baseline and final results, into the newly created working directory.
 
-1. **Run the Evaluator:** Execute the provided evaluator on the initial solution code.  
+0. **Figure out how to run the evaluator:** The evaluator is your oracle for feedback. It will provide a score and detailed feedback on the performance of any solution you submit. Before you can optimize, you must understand how to run it and interpret its output. Look for documentation, comments in the code, or any clues that indicate how to execute the evaluator and where it expects input and output files to be located.
+1. **Establish the Baseline:** Execute the provided evaluator on the initial solution code. Make sure results are saved in the working directory with a subdirectory named "initial_results/ This will serve as your reference point for all future generations.  
 2. **Inspect the Output:** Carefully analyze the results. The evaluator will return a score (higher is better), but also look for correctness flags, failure states, error messages, internal states, or debug logs.  
 3. **Understand the Baseline:** Materialize your understanding of the current solution's performance, why it receives its current score, and how the evaluator formats its feedback.
 4. **Establish the first parent generation:** Generate the first generation of optimized solutions. Use the knowledge you acquired from running and analyzing the problem and baseline results in order to generate a diverse set of one to three solutions as the first parent generation.
@@ -41,7 +43,7 @@ Once the baseline is established, enter a rigorous generate-and-evaluate loop. F
 | **Strategy B: Synthesis/Crossover** | Select two distinct, high-performing solutions from history and merge their best traits, logic, or algorithmic approaches into a single hybrid. | Use when different lineages show complementary strengths or when a breakthrough requires combining modular ideas. |
 | **Strategy C: Novel Rewrite** | Perform a full rewrite using a completely novel approach, often inspired by external research or state-of-the-art algorithms. | Use to escape local optima or when current lineages have stagnated and a fundamental architectural shift is required. |
 
-Please update your bookkeeping after every iteration of the loop.
+Please update your bookkeeping after every iteration of the loop. DO NOT lose track of the lineage, the strategy used, and the rationale behind each generation. DO NOT remove any entries from the record. This will be crucial for informed decision-making in subsequent generations.
 
 *Parent Selection Strategies:*
 Do not rely purely on greedy parent selection. Employ the following strategies to balance exploration and exploitation:
@@ -66,7 +68,9 @@ To prevent premature convergence on a local optimum, the population must be stra
 
 To prevent getting stuck in local optima and to maintain a clear overview of the optimization process, you must meticulously manage your state:
 
-* **Maintain a Population Tracker:** Create a population\_history.md file. Record every visited solution, its file path, its generation strategy (Mutation/Synthesis/Rewrite), its parents (if applicable), and its final score. Use this to identify the best candidates for the next generation.  
+* **Maintain a Population Tracker:** Create a population\_history.md file. Record every visited solution, its file path, its generation strategy (Mutation/Synthesis/Rewrite), its parents (if applicable), and its final score. Use this to identify the best candidates for the next generation.  Use the following schema: | Generation | File Path | Strategy | Parents | Score | Valid | Notes |
+
+
 * **Maintain a To-Do & Strategy Document:** Create a strategy\_and\_todos.md file.  
   * **A) Next Steps:** Keep an updated, prioritized list of what needs to be done next (e.g., "Write analysis script for generation 4", "Try crossover between gen 2 and gen 5").
   * **B) Materialized Learnings:** Document key discoveries (e.g., "The evaluator heavily penalizes memory allocation overhead," or "Approach X fails edge case Y"). Rely on these learnings to guide future generations.
@@ -76,7 +80,7 @@ To prevent getting stuck in local optima and to maintain a clear overview of the
 
 Sample efficiency is paramount. LLM calls and sandbox evaluations are your most precious resources.
 
-### The MetaSummarizer (Strategic Synthesis)
+**The MetaSummarizer (Strategic Synthesis)**  
 
 Every three generations, synthesize the recent evaluation history:
 
