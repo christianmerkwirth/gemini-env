@@ -75,8 +75,22 @@ def main():
     
     print(f"Evaluating {args.program_path} for n=20..40 using {args.num_processes} processes...")
     
+    raw_results = []
     with multiprocessing.Pool(processes=args.num_processes) as pool:
-        raw_results = pool.starmap(worker, [(args.program_path, n) for n in ns])
+        # Use apply_async to allow per-task timeouts
+        tasks = [(n, pool.apply_async(worker, (args.program_path, n))) for n in ns]
+        
+        for n, task in tasks:
+            try:
+                # 60 second timeout per n
+                result = task.get(timeout=60)
+                raw_results.append(result)
+            except multiprocessing.TimeoutError:
+                print(f"  n={n}: FAILED - Timeout after 60 seconds")
+                raw_results.append((n, None, 0.0, "Timeout after 60 seconds"))
+            except Exception as e:
+                print(f"  n={n}: FAILED - {e}")
+                raw_results.append((n, None, 0.0, str(e)))
 
     metrics = {}
     all_valid = True

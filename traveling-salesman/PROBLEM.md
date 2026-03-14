@@ -21,5 +21,6 @@ The random seed for city generation is fixed as `42 + n` to ensure reproducibili
 2. **Metaheuristics**: Simulated Annealing, Genetic Algorithms, or Ant Colony Optimization can find near-optimal solutions.
 3. **Exact Methods**: For $n=40$, modern solvers can find the absolute optimum quickly, but you must implement a robust generalized approach in Python.
 4. **PyTorch/Optimization**: While TSP is discrete, continuous relaxations or neural solvers can also be explored.
+5. **Computational Efficiency**: Use numba or similar to speed up computation.
 
 Be creative and try to find a universal approach that scales effectively across the range.
