@@ -49,9 +49,9 @@ Please update your bookkeeping after every iteration of the loop. DO NOT lose tr
 Do not rely purely on greedy parent selection. Employ the following strategies to balance exploration and exploitation:
 | Strategy | Description | Best Used For |
 | :--- | :--- | :--- |
-| **Weighted Sigmoid** | Assigns selection probability based on fitness score combined with a "novelty bonus" (penalizing over-sampled parents). | Maintaining a healthy, diverse general population. |
-| **Power Law** | Heavily favors top ranks but ensures a mathematical "long tail" chance for lower-ranked variants. | Escaping early stagnation. |
-| **Beam Search** | Locks onto a specific, highly promising lineage for several generations to force deep, sequential mutations. | Pushing a complex algorithmic breakthrough to completion. |
+| **Include novelty into selection process** | Assigns selection probability based on fitness score combined with a "novelty bonus" (penalizing over-sampled parents). | Maintaining a healthy, diverse general population. |
+| **Do not forget the long tail** | Heavily favors top ranks but ensures a mathematical "long tail" chance for lower-ranked variants. | Escaping early stagnation. |
+| **Follow a promising lineage** | Locks onto a specific, highly promising lineage for several generations to force deep, sequential mutations. | Pushing a complex algorithmic breakthrough to completion. |
 
 
 *Population Management & Selection:*

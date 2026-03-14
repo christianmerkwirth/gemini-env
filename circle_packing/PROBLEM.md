@@ -13,10 +13,11 @@ Your `combined_score` is the **sum of the total radii** achieved across all 21 i
 - **Validation**: All circles must be disjoint and contained entirely within the unit square $[0, 1] \times [0, 1]$. If **any** of the 21 challenges fail validation (e.g., due to overlaps or boundary violations), the entire evaluation is marked as incorrect.
 
 ## Key Insights to Explore
+0. **Starting Configuration**: A pure hexagonal arrangement is rarely optimal in a square container due to boundary constraints, but might be a good starting point. Some random pertubations might help to break symmetries.
 1. **Variable Sizes**: The optimal arrangement often involves variable-sized circles to fill gaps efficiently.
-2. **Edge Effects**: A pure hexagonal arrangement is rarely optimal in a square container due to boundary constraints.
+2. **Imperfect Symmetries**: The optimal arrangement often involves not perfectly symmetrical arrangements.
 3. **Hybrid Approaches**: Many SOTA packings use hybrid arrangements (e.g., dense centers with adaptive perimeter placement).
-4. **Iterative Refinement**: Consider using physics-based models, gradient descent, or second-order optimization (like SLSQP) with carefully tuned parameters.
+4. **Iterative Refinement**: Consider using physics-based models, gradient descent, or second-order optimization (like SLSQP) with carefully tuned parameters. Use torch and Adam for last-meter finetuning of results.
 5. **Symmetry and Structure**: Strategic placement at corners and edges often yields significant gains.
 6. **Generalization**: Since you are evaluated on a range, your algorithm must be robust and adaptive to different values of $n$.
 

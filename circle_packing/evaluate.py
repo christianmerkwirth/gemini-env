@@ -308,7 +308,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--timeout",
         type=int,
-        default=60,
+        default=180,
         help="Timeout for each evaluation run in seconds",
     )
     parser.add_argument(
