@@ -5,20 +5,22 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import sys
 
-def draw_packing(ax, centers, radii, n, title):
+def draw_packing(ax, centers, radii, n):
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.set_aspect("equal")
     ax.set_xticks([])
     ax.set_yticks([])
-    for i, (center, radius) in enumerate(zip(centers, radii)):
+    for center, radius in zip(centers, radii):
         circle = Circle(center, radius, alpha=0.6, facecolor='royalblue', edgecolor='darkblue', linewidth=0.5)
         ax.add_patch(circle)
     sum_radii = np.sum(radii)
-    ax.set_title(f"n={n}, sum={sum_radii:.3f}", fontsize=10)
+    ax.set_title(f"n={n}\nsum={sum_radii:.3f}", fontsize=10)
 
 def main():
     elite_dir = os.path.dirname(os.path.abspath(__file__))
+    # Identify unique solutions by looking at data files or py files
+    # To avoid redundancy, we only visualize the one with data_20260314.npz if it exists
     py_files = sorted([f for f in os.listdir(elite_dir) if f.endswith('.py') and f != 'evaluate_and_visualize_elite.py'])
     
     print(f"Found {len(py_files)} elite solutions: {py_files}")
@@ -36,8 +38,9 @@ def main():
             continue
             
         print(f"Evaluating and visualizing {py_file}...")
-        fig, axes = plt.subplots(7, 3, figsize=(15, 30))
-        fig.suptitle(f"Elite Solution: {py_file}", fontsize=24, y=1.02)
+        # Use 3 rows and 7 columns for 21 packings (n=10..30)
+        fig, axes = plt.subplots(3, 7, figsize=(21, 9))
+        fig.suptitle(f"Elite Solution: {py_file}", fontsize=20, y=1.05)
         axes = axes.flatten()
         
         total_score = 0
@@ -45,7 +48,7 @@ def main():
             try:
                 centers, radii, sum_radii = module.run_packing(n)
                 total_score += sum_radii
-                draw_packing(axes[i], centers, radii, n, py_file)
+                draw_packing(axes[i], centers, radii, n)
             except Exception as e:
                 axes[i].text(0.5, 0.5, f"Failed n={n}\n{e}", ha='center', va='center')
                 print(f"  n={n}: Failed: {e}")
