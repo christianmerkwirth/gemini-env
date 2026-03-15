@@ -29,7 +29,11 @@ def validate_tour(n: int, tour: Any) -> Tuple[bool, str]:
     if len(tour) != n:
         return False, f"Tour length must be {n}, got {len(tour)}"
     
-    tour_list = [int(x) for x in tour]
+    try:
+        tour_list = [int(x) for x in tour]
+    except (ValueError, TypeError):
+        return False, "Tour elements must be integers"
+        
     if sorted(tour_list) != list(range(n)):
         return False, "Tour must be a valid permutation of indices 0 to n-1"
     
@@ -63,56 +67,69 @@ def worker(program_path: str, n: int) -> Tuple[int, Optional[List[int]], float, 
         import traceback
         return n, None, 0.0, f"Error: {e}\n{traceback.format_exc()}"
 
-def main():
-    parser = argparse.ArgumentParser(description="TSP Evaluator")
-    parser.add_argument("--program_path", type=str, default="tsp/initial.py", help="Path to solution")
-    parser.add_argument("--results_dir", type=str, default="tsp/results", help="Dir to save results")
-    parser.add_argument("--num_processes", type=int, default=12, help="Parallel processes")
-    args = parser.parse_args()
-
-    os.makedirs(args.results_dir, exist_ok=True)
-    ns = list(range(20, 41)) # 21 runs
-    
-    print(f"Evaluating {args.program_path} for n=20..40 using {args.num_processes} processes...")
-    
+def run_evaluation(program_path: str, ns: List[int], num_processes: int, timeout_per_n: int = 60) -> Tuple[Dict[str, Any], bool]:
+    """Runs the evaluation and returns metrics and correctness flag."""
     raw_results = []
-    with multiprocessing.Pool(processes=args.num_processes) as pool:
-        # Use apply_async to allow per-task timeouts
-        tasks = [(n, pool.apply_async(worker, (args.program_path, n))) for n in ns]
+    
+    # Use a manager to handle the case where the pool itself might be interrupted
+    with multiprocessing.Pool(processes=num_processes) as pool:
+        tasks = [(n, pool.apply_async(worker, (program_path, n))) for n in ns]
         
         for n, task in tasks:
             try:
-                # 60 second timeout per n
-                result = task.get(timeout=60)
+                result = task.get(timeout=timeout_per_n)
                 raw_results.append(result)
             except multiprocessing.TimeoutError:
-                print(f"  n={n}: FAILED - Timeout after 60 seconds")
-                raw_results.append((n, None, 0.0, "Timeout after 60 seconds"))
+                raw_results.append((n, None, 0.0, f"Timeout after {timeout_per_n} seconds"))
             except Exception as e:
-                print(f"  n={n}: FAILED - {e}")
                 raw_results.append((n, None, 0.0, str(e)))
 
-    metrics = {}
     all_valid = True
     total_negative_distance = 0.0
-    
     public_results = {}
     
     for n, tour, dist, err in raw_results:
         if err:
             all_valid = False
-            print(f"  n={n}: FAILED - {err}")
             public_results[f"n_{n}"] = {"status": "failed", "error": err}
         else:
-            print(f"  n={n}: Distance = {dist:.4f}")
             total_negative_distance -= dist
             public_results[f"n_{n}"] = {"status": "success", "distance": dist}
+
+    # Re-check if any result was failed
+    for res in public_results.values():
+        if res["status"] == "failed":
+            all_valid = False
+            break
 
     metrics = {
         "combined_score": total_negative_distance,
         "all_valid": all_valid,
         "results": public_results
     }
+    
+    return metrics, all_valid
+
+def main():
+    parser = argparse.ArgumentParser(description="TSP Evaluator")
+    parser.add_argument("--program_path", type=str, default="tsp/initial.py", help="Path to solution")
+    parser.add_argument("--results_dir", type=str, default="tsp/results", help="Dir to save results")
+    parser.add_argument("--num_processes", type=int, default=12, help="Parallel processes")
+    parser.add_argument("--timeout", type=int, default=60, help="Timeout per n in seconds")
+    args = parser.parse_args()
+
+    os.makedirs(args.results_dir, exist_ok=True)
+    ns = list(range(20, 41)) # 21 runs
+    
+    print(f"Evaluating {args.program_path} for n=20..40 using {args.num_processes} processes (timeout={args.timeout}s per n)...")
+    
+    metrics, all_valid = run_evaluation(args.program_path, ns, args.num_processes, args.timeout)
+
+    for n_key, res in metrics["results"].items():
+        if res["status"] == "failed":
+            print(f"  {n_key}: FAILED - {res['error']}")
+        else:
+            print(f"  {n_key}: Distance = {res['distance']:.4f}")
 
     with open(os.path.join(args.results_dir, "metrics.json"), "w") as f:
         json.dump(metrics, f, indent=4)
@@ -121,7 +138,7 @@ def main():
         json.dump(all_valid, f)
 
     print(f"\nEvaluation Finished.")
-    print(f"Combined Score: {total_negative_distance:.4f}")
+    print(f"Combined Score: {metrics['combined_score']:.4f}")
     print(f"All Valid: {all_valid}")
 
 if __name__ == "__main__":
