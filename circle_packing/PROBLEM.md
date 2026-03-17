@@ -21,4 +21,10 @@ Your `combined_score` is the **sum of the total radii** achieved across all 21 i
 5. **Symmetry and Structure**: Strategic placement at corners and edges often yields significant gains.
 6. **Generalization**: Since you are evaluated on a range, your algorithm must be robust and adaptive to different values of $n$.
 
+## Tooling
+
+Please use `uv run python3 ...` with a Python version > 3.12. 
+
+## Final Words
+
 Be creative and try to find a universal approach that scales effectively. Do not hesitate to try radically different geometric strategies or optimization routines.
